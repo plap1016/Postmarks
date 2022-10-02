@@ -1,0 +1,76 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="stdafx.cpp" />
+    <ClCompile Include="configuration.cxx">
+      <Filter>Generated</Filter>
+    </ClCompile>
+    <ClCompile Include="configuration-pimpl.cxx">
+      <Filter>Generated</Filter>
+    </ClCompile>
+    <ClCompile Include="configuration-pskel.cxx">
+      <Filter>Generated</Filter>
+    </ClCompile>
+    <ClCompile Include="Postmarks.cpp" />
+    <ClCompile Include="sqlite3.c" />
+    <ClCompile Include="postmark.cxx">
+      <Filter>Generated</Filter>
+    </ClCompile>
+    <ClCompile Include="postmark-pimpl.cxx">
+      <Filter>Generated</Filter>
+    </ClCompile>
+    <ClCompile Include="postmark-pskel.cxx">
+      <Filter>Generated</Filter>
+    </ClCompile>
+    <ClCompile Include="postmark-simpl.cxx">
+      <Filter>Generated</Filter>
+    </ClCompile>
+    <ClCompile Include="postmark-sskel.cxx">
+      <Filter>Generated</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="stdafx.h" />
+    <ClInclude Include="targetver.h" />
+    <ClInclude Include="configuration.hxx">
+      <Filter>Generated</Filter>
+    </ClInclude>
+    <ClInclude Include="configuration-pimpl.hxx">
+      <Filter>Generated</Filter>
+    </ClInclude>
+    <ClInclude Include="configuration-pskel.hxx">
+      <Filter>Generated</Filter>
+    </ClInclude>
+    <ClInclude Include="NumericRangeHandler.h" />
+    <ClInclude Include="Postmarks.h" />
+    <ClInclude Include="sqlite3.h" />
+    <ClInclude Include="sqlite3ext.h" />
+    <ClInclude Include="postmark.hxx">
+      <Filter>Generated</Filter>
+    </ClInclude>
+    <ClInclude Include="postmark-pimpl.hxx">
+      <Filter>Generated</Filter>
+    </ClInclude>
+    <ClInclude Include="postmark-pskel.hxx">
+      <Filter>Generated</Filter>
+    </ClInclude>
+    <ClInclude Include="postmark-simpl.hxx">
+      <Filter>Generated</Filter>
+    </ClInclude>
+    <ClInclude Include="postmark-sskel.hxx">
+      <Filter>Generated</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="ReadMe.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Generated">
+      <UniqueIdentifier>{88fb065c-e977-46a6-9623-887dd941f352}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="..\..\Messages\postmark.xsd" />
+    <CustomBuild Include="configuration.xsd" />
+  </ItemGroup>
+</Project>
