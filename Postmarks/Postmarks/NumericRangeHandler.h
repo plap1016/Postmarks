@@ -150,7 +150,7 @@ public:
 			NumericRangeList nwr;
 			nwr.m_s.erase(nwr.m_s.begin());
 			typename NRSet::iterator it = m_s.begin();
-			for (; it != m_s.end(); it++)
+			for (; it != m_s.end(); ++it)
 			{
 				if (it->m_from > rngst)
 					nwr.m_s.insert(NumericRange(rngst, it->m_from - e));
@@ -170,7 +170,7 @@ public:
 			if (!m_s.empty())
 			{
 				typename NRSet::iterator it1 = m_s.begin(), it2 = m_s.begin();
-				for (it2++; it2 != m_s.end();)
+				for (++it2; it2 != m_s.end();)
 				{
 					if (!it1->intersect(*it2).invalid()) // overlap
 					{
@@ -188,8 +188,8 @@ public:
 						continue;
 					}
 					else
-						it1++;
-					it2++;
+						++it1;
+					++it2;
 				}
 			}
 			return *this;

@@ -17,7 +17,6 @@
 					<Add option="-O3" />
 				</Compiler>
 				<Linker>
-					<Add option="-Wl,-Bstatic -lboost_system -lboost_filesystem -Wl,-Bdynamic" />
 					<Add directory="$(PROJECTDIR)/../Config/tinyxpath" />
 					<Add directory="$(#xsde.LIB)" />
 				</Linker>
@@ -33,7 +32,6 @@
 					<Add option="-g" />
 				</Compiler>
 				<Linker>
-					<Add option="-Wl,-Bstatic -lboost_system -lboost_filesystem -Wl,-Bdynamic" />
 					<Add directory="$(PROJECTDIR)/../Config/tinyxpath" />
 					<Add directory="$(#xsde.LIB)" />
 				</Linker>
@@ -51,8 +49,6 @@
 					<Add option="-std=c++11" />
 				</Compiler>
 				<Linker>
-					<Add library="boost_filesystem" />
-					<Add library="boost_system" />
 					<Add directory="$(#xsde.LIB_ARM)" />
 				</Linker>
 			</Target>
@@ -65,12 +61,10 @@
 				<Option parameters="-ec /home/andrew/HGRoot/ccm_psub/Config/SystemConfig.xml" />
 				<Option projectLibDirsRelation="2" />
 				<Compiler>
-					<Add option="-g" />
 					<Add option="-std=c++11" />
+					<Add option="-g" />
 				</Compiler>
 				<Linker>
-					<Add library="boost_filesystem" />
-					<Add library="boost_system" />
 					<Add directory="$(#xsde.LIB_ARM)" />
 				</Linker>
 			</Target>
@@ -96,6 +90,8 @@
 			<Add library="xsde" />
 			<Add library="dl" />
 			<Add library="pthread" />
+			<Add library="boost_system" />
+			<Add library="boost_filesystem" />
 			<Add directory="$(WORKSPACEDIR)/$(TARGET_NAME)" />
 		</Linker>
 		<Unit filename="Daemon.cpp" />

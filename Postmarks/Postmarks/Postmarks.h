@@ -52,6 +52,7 @@ class Postmarks : public Task::TActiveTask<Postmarks>, public PubSub::TPubSubCli
 	void onConnected(const std::shared_ptr<BA::ip::tcp::socket>& socket);
 	void onConnectionError(const std::string& error);
 	void OnReadSome(const boost::system::error_code& error, size_t bytes_transferred);
+	void receivePSub(PubSub::Message&& msg) { /*hand off to thread queue*/enqueue(msg); }
 	void sendBuffer(const std::string& buff)
 	{
 		try
@@ -82,7 +83,7 @@ class Postmarks : public Task::TActiveTask<Postmarks>, public PubSub::TPubSubCli
 	sqlite3* m_pmdb;
 
 public:
-	Postmarks(Logging::LogFile& log, const std::string& psubAddr = "127.0.0.1");
+	explicit Postmarks(Logging::LogFile& log, const std::string& psubAddr = "127.0.0.1");
 	~Postmarks();
 
 	bool start();
