@@ -68,6 +68,38 @@
 					<Add directory="$(#xsde.LIB_ARM)" />
 				</Linker>
 			</Target>
+			<Target title="IVU_Release">
+				<Option output="$(WORKSPACEDIR)/$(TARGET_NAME)/ccmpostmarksd" prefix_auto="1" extension_auto="1" />
+				<Option object_output=".objs/$(TARGET_NAME)" />
+				<Option type="1" />
+				<Option compiler="poky_compiler_for_ivu" />
+				<Option use_console_runner="0" />
+				<Option projectIncludeDirsRelation="2" />
+				<Option projectLibDirsRelation="2" />
+				<Compiler>
+					<Add option="-O3" />
+					<Add option="-std=c++11" />
+				</Compiler>
+				<Linker>
+					<Add directory="$(#xsde.LIB_ARM)" />
+				</Linker>
+			</Target>
+			<Target title="IVU_Debug">
+				<Option output="$(WORKSPACEDIR)/$(TARGET_NAME)/ccmpostmarksd" prefix_auto="1" extension_auto="1" />
+				<Option object_output=".objs/$(TARGET_NAME)" />
+				<Option type="1" />
+				<Option compiler="poky_compiler_for_ivu" />
+				<Option use_console_runner="0" />
+				<Option parameters="-ec /home/andrew/HGRoot/ccm_psub/Config/SystemConfig.xml" />
+				<Option projectLibDirsRelation="2" />
+				<Compiler>
+					<Add option="-std=c++11" />
+					<Add option="-g" />
+				</Compiler>
+				<Linker>
+					<Add directory="$(#xsde.LIB_ARM)" />
+				</Linker>
+			</Target>
 		</Build>
 		<VirtualTargets>
 			<Add alias="All" targets="Release;Debug;ARM_Release;ARM_Debug;" />
