@@ -39,6 +39,7 @@ Postmarks::Postmarks(Logging::LogFile& log, const std::string& psubAddr)
 	: Task::TActiveTask<Postmarks>(2)
 	, Logging::LogClient(log)
 	, m_pubsubaddr(psubAddr)
+	, m_sock(m_iosvc)
 {
 }
 
@@ -94,11 +95,6 @@ void Postmarks::socketThread()
 
 void Postmarks::initSock()
 {
-	if (!m_sockptr)
-		m_sockptr.reset(new BA::ip::tcp::socket(m_iosvc));
-	else
-		m_sockptr->close();
-
 	std::string::size_type i = m_pubsubaddr.find(':');
 	if (i == std::string::npos)
 		connect(m_pubsubaddr, "3101");
@@ -115,43 +111,35 @@ void Postmarks::connect(const std::string& address, const std::string& port)
 {
 	namespace BIP = boost::asio::ip;
 
-	std::shared_ptr<BIP::tcp::socket> socket = std::make_shared<BIP::tcp::socket>(m_iosvc);
 	std::shared_ptr<BIP::tcp::resolver> resolver = std::make_shared<BIP::tcp::resolver>(m_iosvc);
-	BIP::tcp::resolver::query query(address, port);
 
-	socket->open(boost::asio::ip::tcp::v4());
-	socket->set_option(boost::asio::socket_base::keep_alive(true));
-
-	auto connectHandler = [socket, this]
-		(const boost::system::error_code & errorCode, const BIP::tcp::resolver::iterator & it)
+	auto connectHandler = [this] (const boost::system::error_code& errorCode, const BIP::tcp::endpoint& ep)
 	{
 		if (errorCode)
 			onConnectionError("Could not connect: " + errorCode.message());
-		else if (it == BIP::tcp::resolver::iterator())
-			onConnectionError("Could not connect!");
 		else
-			onConnected(std::move(socket));
+			onConnected();
 	};
 
-	auto resolveHandler = [socket, resolver, connectHandler, this]
-		(const boost::system::error_code & errorCode, const BIP::tcp::resolver::iterator & it)
+	auto resolveHandler = [resolver, connectHandler, this]
+		(const boost::system::error_code& errorCode, const BIP::tcp::resolver::results_type results)
 	{
 		if (errorCode)
 			onConnectionError("Could not resolve address: " + errorCode.message());
 		else
-			boost::asio::async_connect(*socket, it, BIP::tcp::resolver::iterator(), connectHandler);
+			boost::asio::async_connect(m_sock, results, connectHandler);
 	};
 
-	resolver->async_resolve(query, resolveHandler);
+	resolver->async_resolve(address, port, resolveHandler);
 }
 
-void Postmarks::onConnected(const std::shared_ptr<BA::ip::tcp::socket>& socket)
+void Postmarks::onConnected()
 {
 	LOG(Logging::LL_Info, Logging::LC_PubSub, "Connected to pSub bus");
 
 	resetPSub();
 
-	m_sockptr = socket;
+	m_sock.set_option(boost::asio::socket_base::keep_alive(true));
 
 	// Subscribe to stuff
 	subscribe(SUB_CFG);
@@ -168,7 +156,7 @@ void Postmarks::onConnected(const std::shared_ptr<BA::ip::tcp::socket>& socket)
 		m_here->cancelMsg();
 	m_here = enqueueWithDelay<evHereTime>(2000, true);
 
-	m_sockptr->async_read_some(BA::buffer(readBuff, 1024), std::bind(&Postmarks::OnReadSome, this, std::placeholders::_1, std::placeholders::_2));
+	m_sock.async_read_some(BA::buffer(readBuff, 1024), std::bind(&Postmarks::OnReadSome, this, std::placeholders::_1, std::placeholders::_2));
 }
 
 void Postmarks::onConnectionError(const std::string& error)
@@ -191,7 +179,7 @@ void Postmarks::OnReadSome(const boost::system::error_code& error, size_t bytes_
 			LOG(Logging::LL_Dump, Logging::LC_PubSub, readBuff);
 		}
 
-		m_sockptr->async_read_some(BA::buffer(readBuff, 1024), std::bind(&Postmarks::OnReadSome, this, std::placeholders::_1, std::placeholders::_2));
+		m_sock.async_read_some(BA::buffer(readBuff, 1024), std::bind(&Postmarks::OnReadSome, this, std::placeholders::_1, std::placeholders::_2));
 	}
 	else
 	{

@@ -46,10 +46,10 @@ class Postmarks : public Task::TActiveTask<Postmarks>, public PubSub::TPubSubCli
 	void socketThread();
 	BA::io_service m_iosvc;
 	std::string m_pubsubaddr;
-	std::shared_ptr<BA::ip::tcp::socket> m_sockptr;
+	BA::ip::tcp::socket m_sock;
 	void initSock();
 	void connect(const std::string& address, const std::string& port);
-	void onConnected(const std::shared_ptr<BA::ip::tcp::socket>& socket);
+	void onConnected();
 	void onConnectionError(const std::string& error);
 	void OnReadSome(const boost::system::error_code& error, size_t bytes_transferred);
 	void receivePSub(PubSub::Message&& msg) { /*hand off to thread queue*/enqueue(msg); }
@@ -57,7 +57,7 @@ class Postmarks : public Task::TActiveTask<Postmarks>, public PubSub::TPubSubCli
 	{
 		try
 		{
-			BA::write(*m_sockptr, BA::buffer(frameMsg(buff)));
+			BA::write(m_sock, BA::buffer(frameMsg(buff)));
 		}
 		catch (const boost::exception&)
 		{
