@@ -32,8 +32,8 @@ HANDLE g_exitEvent;
 
 extern std::string g_version;
 
-const int32_t TTL_LONGTIME = -43200000; // up to 12 hrs or until superceded
-const int32_t TTL_STATUS = 60000;
+constexpr qpc_clock::duration TTL_LONGTIME{std::chrono::hours(-12)}; // up to 12 hrs or until superseded
+constexpr qpc_clock::duration TTL_STATUS{std::chrono::minutes(1)};
 
 Postmarks::Postmarks(Logging::LogFile& log, const std::string& psubAddr)
 	: Task::TActiveTask<Postmarks>(2)
@@ -150,11 +150,11 @@ void Postmarks::onConnected()
 	sendMsg(PubSub::Message(PUB_ALIVE, g_version, TTL_LONGTIME));
 
 	if (!haveCfg)
-		m_cfgAliveDeferred = enqueueWithDelay<evCfgDeferred>(3000);
+		m_cfgAliveDeferred = enqueueWithDelay<evCfgDeferred>(std::chrono::seconds(3));
 
 	if (m_here)
 		m_here->cancelMsg();
-	m_here = enqueueWithDelay<evHereTime>(2000, true);
+	m_here = enqueueWithDelay<evHereTime>(std::chrono::seconds(2), true);
 
 	m_sock.async_read_some(BA::buffer(readBuff, 1024), std::bind(&Postmarks::OnReadSome, this, std::placeholders::_1, std::placeholders::_2));
 }
@@ -162,7 +162,7 @@ void Postmarks::onConnected()
 void Postmarks::onConnectionError(const std::string& error)
 {
 	LOG(Logging::LL_Warning, Logging::LC_PubSub, error << " Reconnect in 1 second");
-	enqueueWithDelay<evReconnect>(1000);
+	enqueueWithDelay<evReconnect>(std::chrono::seconds(1));
 }
 
 void Postmarks::OnReadSome(const boost::system::error_code& error, size_t bytes_transferred)
@@ -191,7 +191,7 @@ void Postmarks::OnReadSome(const boost::system::error_code& error, size_t bytes_
 			m_here->cancelMsg();
 			m_here.reset();
 		}
-		enqueueWithDelay<evReconnect>(1000);
+		enqueueWithDelay<evReconnect>(std::chrono::seconds(1));
 	}
 }
 
@@ -321,7 +321,7 @@ template <> void Postmarks::processEvent<Postmarks::evCfgDeferred>()
 	if (!haveCfg)
 	{
 		sendMsg(PubSub::Message(PUB_CFG_REQUEST, g_version));
-		m_cfgAliveDeferred = enqueueWithDelay<evCfgDeferred>(3000);
+		m_cfgAliveDeferred = enqueueWithDelay<evCfgDeferred>(std::chrono::seconds(3));
 	}
 }
 
