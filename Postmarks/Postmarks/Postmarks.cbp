@@ -81,7 +81,7 @@
 			<Add alias="All" targets="Release;Debug;ARM_Release;ARM_Debug;IVU_Release;IVU_Debug;" />
 		</VirtualTargets>
 		<Compiler>
-			<Add option="-std=c++11" />
+			<Add option="-std=c++17" />
 			<Add option="-fPIC" />
 			<Add directory="$(WORKSPACEDIR)" />
 			<Add directory="$(WORKSPACEDIR)/Common" />

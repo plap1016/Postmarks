@@ -209,7 +209,7 @@ int main(int argc, char* argv[])
 	while(!stopEvent.timedwait(1000))
 	{
 		//syslog(LOG_INFO, "configd says hello");
-		//boost::this_thread::sleep_for(boost::chrono::seconds(1));
+		//boost::this_thread::sleep_for(1s);
 	}
 
 	disp.stop();

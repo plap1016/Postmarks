@@ -150,19 +150,19 @@ void Postmarks::onConnected()
 	sendMsg(PubSub::Message(PUB_ALIVE, g_version, TTL_LONGTIME));
 
 	if (!haveCfg)
-		m_cfgAliveDeferred = enqueueWithDelay<evCfgDeferred>(std::chrono::seconds(3));
+		m_cfgAliveDeferred = enqueueWithDelay<evCfgDeferred>(3s);
 
 	if (m_here)
 		m_here->cancelMsg();
-	m_here = enqueueWithDelay<evHereTime>(std::chrono::seconds(2), true);
+	m_here = enqueueWithDelay<evHereTime>(2s, true);
 
-	m_sock.async_read_some(BA::buffer(readBuff, 1024), std::bind(&Postmarks::OnReadSome, this, std::placeholders::_1, std::placeholders::_2));
+	m_sock.async_read_some(BA::buffer(readBuff, 1024), [&](const boost::system::error_code& error, size_t bytes){ OnReadSome(error, bytes); });
 }
 
 void Postmarks::onConnectionError(const std::string& error)
 {
 	LOG(Logging::LL_Warning, Logging::LC_PubSub, error << " Reconnect in 1 second");
-	enqueueWithDelay<evReconnect>(std::chrono::seconds(1));
+	enqueueWithDelay<evReconnect>(1s);
 }
 
 void Postmarks::OnReadSome(const boost::system::error_code& error, size_t bytes_transferred)
@@ -179,7 +179,7 @@ void Postmarks::OnReadSome(const boost::system::error_code& error, size_t bytes_
 			LOG(Logging::LL_Dump, Logging::LC_PubSub, readBuff);
 		}
 
-		m_sock.async_read_some(BA::buffer(readBuff, 1024), std::bind(&Postmarks::OnReadSome, this, std::placeholders::_1, std::placeholders::_2));
+		m_sock.async_read_some(BA::buffer(readBuff, 1024), [&](const boost::system::error_code& error, size_t bytes){ OnReadSome(error, bytes); });
 	}
 	else
 	{
@@ -191,7 +191,7 @@ void Postmarks::OnReadSome(const boost::system::error_code& error, size_t bytes_
 			m_here->cancelMsg();
 			m_here.reset();
 		}
-		enqueueWithDelay<evReconnect>(std::chrono::seconds(1));
+		enqueueWithDelay<evReconnect>(1s);
 	}
 }
 
@@ -321,7 +321,7 @@ template <> void Postmarks::processEvent<Postmarks::evCfgDeferred>()
 	if (!haveCfg)
 	{
 		sendMsg(PubSub::Message(PUB_CFG_REQUEST, g_version));
-		m_cfgAliveDeferred = enqueueWithDelay<evCfgDeferred>(std::chrono::seconds(3));
+		m_cfgAliveDeferred = enqueueWithDelay<evCfgDeferred>(3s);
 	}
 }
 
