@@ -37,7 +37,6 @@
 				<Option createDefFile="1" />
 				<Compiler>
 					<Add option="-O3" />
-					<Add option="-std=c++11" />
 				</Compiler>
 			</Target>
 			<Target title="ARM_Debug">
@@ -48,7 +47,6 @@
 				<Option compiler="arm-elf-gcc" />
 				<Option createDefFile="1" />
 				<Compiler>
-					<Add option="-std=c++11" />
 					<Add option="-g" />
 				</Compiler>
 			</Target>
@@ -61,7 +59,6 @@
 				<Option createDefFile="1" />
 				<Compiler>
 					<Add option="-O3" />
-					<Add option="-std=c++11" />
 				</Compiler>
 			</Target>
 			<Target title="IVU_Debug">
@@ -72,7 +69,6 @@
 				<Option compiler="poky_compiler_for_ivu" />
 				<Option createDefFile="1" />
 				<Compiler>
-					<Add option="-std=c++11" />
 					<Add option="-g" />
 				</Compiler>
 			</Target>

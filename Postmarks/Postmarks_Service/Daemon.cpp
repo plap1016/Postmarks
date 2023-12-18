@@ -13,7 +13,7 @@
 #include "Postmarks/Postmarks.h"
 #include "Task/lock.h"
 
-#define DAEMON_NAME "ccmpostmarksd"
+#define DAEMON_NAME "postmarksd"
 
 namespace Logging
 {
@@ -188,7 +188,7 @@ int main(int argc, char* argv[])
 		syslog(LOG_INFO, "Daemon starting up");
 
 		/* Deamonize */
-		daemonize("/tmp/", "/tmp/ccmpostmarksd.pid");
+		daemonize("/tmp/", "/tmp/postmarksd.pid");
 
 		syslog(LOG_INFO, "Daemon running");
 	}
@@ -250,16 +250,16 @@ bool parseCmdLine(int argc, char *argv[])
 				case 'e': // run as exe
 					g_exe = true;
 					break;
-				case 'c': // specify config file
-					if (y == optlen - 1 && ++x < argc && argv[x][0] != '-')
-						g_cfgfile = argv[x];
-					else
-					{
-						std::cout << "Invalid command line parameters" << std::endl;
-						usage();
-						return false;
-					}
-					break;
+//				case 'c': // specify config file
+//					if (y == optlen - 1 && ++x < argc && argv[x][0] != '-')
+//						g_cfgfile = argv[x];
+//					else
+//					{
+//						std::cout << "Invalid command line parameters" << std::endl;
+//						usage();
+//						return false;
+//					}
+//					break;
 				case 'l': // specify log file
 					if (y == optlen - 1 && ++x < argc && argv[x][0] != '-')
 						logfilen = argv[x];
@@ -285,7 +285,7 @@ bool parseCmdLine(int argc, char *argv[])
 void usage()
 {
 	using namespace std;
-	cout << "postmarksd - pSub Postmark Allocation daemon" << endl;
+	cout << "postmarksd - pSub Postmark Allocation service" << endl;
 	cout << "Usage: postmarksd [OPTIONS]" << endl;
 	cout << "Options:" << endl;
 	cout << "\t-h - help. Print this message and exit" << endl;
@@ -296,16 +296,16 @@ void usage()
 	cout << "\t-e - exe. Runs as executable rather than a daemon." << endl;
 	cout << "\t-b <ip address> - bus address. Specifies the address of the publish/subscribe server to connect to" << endl;
 	cout << "\t     If this option is not used the default will be the local host 127.0.0.1" << endl;
-	cout << "\t-c <config file> - config. Specifies the configuration file to load." << endl;
-	cout << "\t     Defaults to ./SystemConfig.xml if ommitted." << endl;
+//	cout << "\t-c <config file> - config. Specifies the configuration file to load." << endl;
+//	cout << "\t     Defaults to ./SystemConfig.xml if ommitted." << endl;
 	cout << "\t-l <log file> - log. Specifies the log file to produce." << endl;
 	cout << endl;
 	cout << "Multiple options can be grouped together e.g. -de sets logging level to debug and runs as an executable" << endl;
 	cout << "Options that require a value (-c, -l) must be at the end of an option group" << endl;
-	cout << "\te.g.  -ec postmarksd.xml  will work but" << endl;
-	cout << "\t      -ce postmarksd.xml  will fail" << endl;
+	cout << "\te.g.  -el postmarks.log  will work but" << endl;
+	cout << "\t      -le postmarks.log  will fail" << endl;
 	cout << endl;
-	cout << "Multiple option groups can be listed e.g.  -dc postmarksd.xml -el postmarksd.log" << endl;
+	cout << "Multiple option groups can be listed e.g.  -d -el postmarksd.log" << endl;
 	cout << endl;
 	cout << "Note: When setting logging levels (-d, -t) the last option listed will" << endl;
 	cout << "override any previously set logging levels" << endl;
