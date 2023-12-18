@@ -302,17 +302,13 @@ void Postmarks::configure(const std::string& cfgStr)
 			haveCfg = true;
 		}
 	}
-	catch (xml_schema::parser_exception& ex)
+	catch (const xml_schema::parser_exception& ex)
 	{
-		LOG(Logging::LL_Warning, Logging::LC_Postmarks, "CONFIG ERROR: The following errors were found:\r\n" << ex.what());
+		std::stringstream err;
+		err << "parser_exception " << ex.text() << " " << ex.what() << " at " << (int)ex.line() << ":" << (int)ex.column();
 
-		PubSub::Message err;
-		err.subject = { "Error", "Postmarks", "Config" };
-		err.payload = ex.text();
-		err.payload += " ";
-		err.payload += ex.what();
-
-		sendMsg(err);
+		LOG(Logging::LL_Warning, Logging::LC_Postmarks, "CONFIG ERROR: The following errors were found:\r\n" << err.str());
+		sendMsg(PubSub::Message{{ "Error", "Postmarks", "Config" }, err.str()});
 	}
 }
 
