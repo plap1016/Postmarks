@@ -118,7 +118,7 @@ void Postmarks::connect(const std::string& address, const std::string& port)
 		if (errorCode)
 			onConnectionError("Could not connect: " + errorCode.message());
 		else
-			onConnected();
+			onConnected(ep);
 	};
 
 	auto resolveHandler = [resolver, connectHandler, this]
@@ -133,9 +133,9 @@ void Postmarks::connect(const std::string& address, const std::string& port)
 	resolver->async_resolve(address, port, resolveHandler);
 }
 
-void Postmarks::onConnected()
+void Postmarks::onConnected(const BA::ip::tcp::endpoint& ep)
 {
-	LOG(Logging::LL_Info, Logging::LC_PubSub, "Connected to pSub bus");
+	LOG(Logging::LL_Info, Logging::LC_PubSub, "Connected to pSub bus at " << ep);
 
 	resetPSub();
 

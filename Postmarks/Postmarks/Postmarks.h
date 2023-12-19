@@ -49,7 +49,7 @@ class Postmarks : public Task::TActiveTask<Postmarks>, public PubSub::TPubSubCli
 	BA::ip::tcp::socket m_sock;
 	void initSock();
 	void connect(const std::string& address, const std::string& port);
-	void onConnected();
+	void onConnected(const BA::ip::tcp::endpoint& ep);
 	void onConnectionError(const std::string& error);
 	void OnReadSome(const boost::system::error_code& error, size_t bytes_transferred);
 	void receivePSub(PubSub::Message&& msg) { /*hand off to thread queue*/enqueue(msg); }
