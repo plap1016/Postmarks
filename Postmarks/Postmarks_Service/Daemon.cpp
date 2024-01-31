@@ -17,7 +17,7 @@
 
 namespace Logging
 {
-	const uint32_t LC_Service = 0x0010;
+	const uint32_t LC_Service = 0x0200;
 	template <> const char* getLCStr<LC_Service      >() { return "Service      "; }
 }
 
@@ -27,29 +27,29 @@ void daemonize(char *rundir, char *pidfile);
 void usage();
 bool parseCmdLine(int argc, char *argv[]);
 
+bool g_exe{false};
 std::string g_psubaddr("127.0.0.1");
 std::string g_version = "1.2.5";
 std::string g_cfgfile("./SystemConfig.xml");
 std::string g_diffpath(".");
-bool g_exe(false);
 
 int pidFilehandle;
-std::string logfilen = DAEMON_NAME ".log";
+std::string logfilen{DAEMON_NAME ".log"};
 Logging::LogFile logfile, *plogfile(&logfile);
 VEvent stopEvent;
 
 void signal_handler(int sig)
 {
+	LOGTO(plogfile, Logging::LL_Info, Logging::LC_Service, "Received " << strsignal(sig) << " signal.");
 	switch(sig)
 	{
 	case SIGHUP:
 		syslog(LOG_WARNING, "Received SIGHUP signal.");
 		break;
 	case SIGINT:
+	case SIGQUIT:
 	case SIGTERM:
-		syslog(LOG_INFO, "Daemon exiting");
 		daemonShutdown();
-		exit(EXIT_SUCCESS);
 		break;
 	default:
 		syslog(LOG_WARNING, "Unhandled signal %s", strsignal(sig));
@@ -59,24 +59,16 @@ void signal_handler(int sig)
 
 void daemonShutdown()
 {
+	LOGTO(plogfile, Logging::LL_Info, Logging::LC_Service, "Shutting down");
+	syslog(LOG_INFO, "shutting down ");
 	stopEvent.set();
 	close(pidFilehandle);
 }
 
-void daemonize(const char *rundir, const char *pidfile)
+void signalSetup()
 {
-	int pid, sid, i;
-	char str[10];
 	struct sigaction newSigAction;
 	sigset_t newSigSet;
-
-	/* Check if parent process id is set */
-	if(getppid() == 1)
-	{
-		/* PPID exists, therefore we are already a daemon */
-		return;
-	}
-
 	/* Set signal mask - signals we want to block */
 	sigemptyset(&newSigSet);
 	sigaddset(&newSigSet, SIGCHLD);  /* ignore child - i.e. we don't need to wait for it */
@@ -94,7 +86,19 @@ void daemonize(const char *rundir, const char *pidfile)
 	sigaction(SIGHUP, &newSigAction, NULL);     /* catch hangup signal */
 	sigaction(SIGTERM, &newSigAction, NULL);    /* catch term signal */
 	sigaction(SIGINT, &newSigAction, NULL);     /* catch interrupt signal */
+}
 
+void daemonize(const char *rundir, const char *pidfile)
+{
+	int pid, sid, i;
+	char str[10];
+
+	/* Check if parent process id is set */
+	if(getppid() == 1)
+	{
+		/* PPID exists, therefore we are already a daemon */
+		return;
+	}
 
 	/* Fork*/
 	pid = fork();
@@ -171,16 +175,18 @@ void daemonize(const char *rundir, const char *pidfile)
 
 int main(int argc, char* argv[])
 {
+	logfilen = DAEMON_NAME ".log";
+
 	if (!parseCmdLine(argc, argv))
 		return -1;
 
+	/* Debug logging
+	setlogmask(LOG_UPTO(LOG_DEBUG));
+	openlog(DAEMON_NAME, LOG_CONS, LOG_USER);
+	*/
+
 	if (!g_exe)
 	{
-		/* Debug logging
-		setlogmask(LOG_UPTO(LOG_DEBUG));
-		openlog(DAEMON_NAME, LOG_CONS, LOG_USER);
-		*/
-
 		/* Logging */
 		setlogmask(LOG_UPTO(LOG_INFO));
 		openlog(DAEMON_NAME, LOG_CONS | LOG_PERROR, LOG_USER);
@@ -188,31 +194,36 @@ int main(int argc, char* argv[])
 		syslog(LOG_INFO, "Daemon starting up");
 
 		/* Deamonize */
-		daemonize("/tmp/", "/tmp/postmarksd.pid");
+		daemonize("/tmp/", "/tmp/" DAEMON_NAME ".pid");
 
 		syslog(LOG_INFO, "Daemon running");
 	}
+
+	signalSetup();
 
 	if (!logfilen.empty())
 		logfile.open(logfilen);
 
 	LOGTO(plogfile, Logging::LL_Info, Logging::LC_Service, "************************************ STARTUP ****************************************");
 	LOGTO(plogfile, Logging::LL_Info, Logging::LC_Service, "***** Executable: " << argv[0]);
+	LOGTO(plogfile, Logging::LL_Info, Logging::LC_Service, "***** Version: " << g_version);
 	for (int x = 1; x < argc; ++x)
 		LOGTO(plogfile, Logging::LL_Info, Logging::LC_Service, "***** Command line parameter: " << argv[x]);
-	LOGTO(plogfile, Logging::LL_Info, Logging::LC_Service, "***** Version: " << g_version);
 	LOGTO(plogfile, Logging::LL_Info, Logging::LC_Service, "*************************************************************************************");
 
 	Postmarks disp(logfile, g_psubaddr);
 	disp.start();
 
-	while(!stopEvent.timedwait(1000))
-	{
-		//syslog(LOG_INFO, "configd says hello");
-		//boost::this_thread::sleep_for(1s);
-	}
+	while(!stopEvent.timedwait(10000))
+		syslog(LOG_INFO, DAEMON_NAME " alive");
+
+	LOGTO(plogfile, Logging::LL_Info, Logging::LC_Service, "main loop finished. Stopping dispatcher");
 
 	disp.stop();
+
+	LOGTO(plogfile, Logging::LL_Info, Logging::LC_Service, "Shut down complete.  Exit");
+	syslog(LOG_INFO, "Shut down complete.  Exit");
+	exit(0);
 }
 
 bool parseCmdLine(int argc, char *argv[])
@@ -250,16 +261,16 @@ bool parseCmdLine(int argc, char *argv[])
 				case 'e': // run as exe
 					g_exe = true;
 					break;
-//				case 'c': // specify config file
-//					if (y == optlen - 1 && ++x < argc && argv[x][0] != '-')
-//						g_cfgfile = argv[x];
-//					else
-//					{
-//						std::cout << "Invalid command line parameters" << std::endl;
-//						usage();
-//						return false;
-//					}
-//					break;
+				case 'b':
+					if (y == optlen - 1 && ++x < argc && argv[x][0] != '-')
+						g_psubaddr = argv[x];
+					else
+					{
+						std::cout << "Invalid command line parameters" << std::endl;
+						usage();
+						return false;
+					}
+					break;
 				case 'l': // specify log file
 					if (y == optlen - 1 && ++x < argc && argv[x][0] != '-')
 						logfilen = argv[x];
@@ -292,12 +303,11 @@ void usage()
 	cout << "\t     If this option is used any subsequent options are ignored" << endl;
 	cout << "\t-d - debug. Sets logging level to DEBUG." << endl;
 	cout << "\t-t - trace. Sets logging level to TRACE." << endl;
+	cout << "\t - T - test. Sets logging level to TEST." << endl;
 	cout << "\t-m - dump. Sets logging level to DUMP." << endl;
 	cout << "\t-e - exe. Runs as executable rather than a daemon." << endl;
-	cout << "\t-b <ip address> - bus address. Specifies the address of the publish/subscribe server to connect to" << endl;
+	cout << "\t-b <ip address> - bus address. Specifies the address of the psub server to connect to" << endl;
 	cout << "\t     If this option is not used the default will be the local host 127.0.0.1" << endl;
-//	cout << "\t-c <config file> - config. Specifies the configuration file to load." << endl;
-//	cout << "\t     Defaults to ./SystemConfig.xml if ommitted." << endl;
 	cout << "\t-l <log file> - log. Specifies the log file to produce." << endl;
 	cout << endl;
 	cout << "Multiple options can be grouped together e.g. -de sets logging level to debug and runs as an executable" << endl;
