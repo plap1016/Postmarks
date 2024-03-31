@@ -326,7 +326,7 @@ template <> void Postmarks::processEvent<Postmarks::evHereTime>()
 	sendMsg(PubSub::Message(PUB_HERE));
 }
 
-void Postmarks::processMsg(const PubSub::Message& m)
+void Postmarks::processMsg(PubSub::Message&& m)
 {
 	std::string str;
 	LOG(Logging::LL_Debug, Logging::LC_Postmarks, "Received msg " << PubSub::toString(m.subject, str));

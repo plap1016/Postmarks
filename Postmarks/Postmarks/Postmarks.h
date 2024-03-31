@@ -94,7 +94,7 @@ public:
 	struct evCfgDeferred;
 	template <typename M> void processEvent();
 
-	void processMsg(const PubSub::Message& m);
+	void processMsg(PubSub::Message&& m);
 	void processMsg(const postmarks::pmRsp& rsp);
 };
 
