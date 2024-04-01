@@ -380,7 +380,6 @@ bool Postmarks::updStoredPostmark(postmarks::pmRsp& rsp)
 	if (!rsp.pm_present())
 		return false;
 
-	uint32_t pm = rsp.pm();
 	if (getStoredPostmark(rsp))
 	{
 		std::stringstream sql;
