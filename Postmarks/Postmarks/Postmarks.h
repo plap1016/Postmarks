@@ -2,6 +2,7 @@
 
 #include "Logging/Log.h"
 #include "Task/TTask.h"
+#include "HubApp/HubApp.h"
 #include "PubSubLib/PubSub.h"
 #include "pugixml/pugixml.hpp"
 #include "sqlite3.h"
@@ -25,45 +26,20 @@ extern HANDLE g_exitEvent;
 
 namespace Logging
 {
-	const uint32_t LC_Task = 0x0001;
-	const uint32_t LC_PubSub = 0x0002;
-	const uint32_t LC_TcpConn = 0x0004;
-	const uint32_t LC_Postmarks = 0x0008;
+	const uint32_t LC_Task = 0x0010;
+	const uint32_t LC_Postmarks = 0x0020;
 }
 
 namespace BA = boost::asio;
 
-class Postmarks : public Task::TActiveTask<Postmarks>, public PubSub::TPubSubClient<Postmarks>, public Logging::LogClient
+class Postmarks : public Task::TActiveTask<Postmarks>, /*public PubSub::TPubSubClient<Postmarks>,*/ public Logging::LogClient
 {
-	friend PubSub::TPubSubClient<Postmarks>;
-
 	std::recursive_mutex m_lk; // General lock on dispatcher state
-	std::recursive_mutex m_socklk; // General lock on socket
 
-	uint8_t readBuff[1024];
-
-	std::thread m_sockThread;
-	void socketThread();
-	BA::io_service m_iosvc;
-	std::string m_pubsubaddr;
-	BA::ip::tcp::socket m_sock;
-	void initSock();
-	void connect(const std::string& address, const std::string& port);
-	void onConnected(const BA::ip::tcp::endpoint& ep);
-	void onConnectionError(const std::string& error);
-	void OnReadSome(const boost::system::error_code& error, size_t bytes_transferred);
-	void receivePSub(PubSub::Message&& msg) { /*hand off to thread queue*/enqueue(msg); }
-	void sendBuffer(const std::string& buff)
-	{
-		try
-		{
-			BA::write(m_sock, BA::buffer(frameMsg(buff)));
-		}
-		catch (const boost::exception&)
-		{
-			// do nothing - the OnReadSome method will handle it
-		}
-	};
+	friend HubApp::HubApp;
+	HubApp::HubApp m_hub;
+	void receiveEvent(PubSub::Message&& msg) { /*hand off to thread queue*/enqueue(msg); }
+	void eventBusConnected(bool available);
 
 	std::recursive_mutex m_dispLock;
 	PmConfig::Postmarks m_cfg;
@@ -72,9 +48,6 @@ class Postmarks : public Task::TActiveTask<Postmarks>, public PubSub::TPubSubCli
 	void assignPostmark(const std::string& req);
 	bool getStoredPostmark(postmarks::pmRsp& rsp);
 	bool updStoredPostmark(postmarks::pmRsp& rsp);
-
-	Task::MsgDelayMsgPtr m_cfgAliveDeferred;
-	Task::MsgDelayMsgPtr m_here;
 
 	typedef Nmrh::NumericRangeHandler<uint32_t> Postmarks_t;
 	typedef std::vector<std::pair<std::regex, Postmarks_t> > regex_pm_t;
@@ -88,11 +61,6 @@ public:
 
 	bool start();
 	void stop();
-
-	struct evHereTime;
-	struct evReconnect;
-	struct evCfgDeferred;
-	template <typename M> void processEvent();
 
 	void processMsg(PubSub::Message&& m);
 	void processMsg(const postmarks::pmRsp& rsp);
