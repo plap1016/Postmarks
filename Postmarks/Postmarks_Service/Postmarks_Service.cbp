@@ -113,6 +113,7 @@
 			<Add library="Postmarks" />
 			<Add library="Logging" />
 			<Add library="Task" />
+			<Add library="Misc" />
 			<Add library="pugixml" />
 			<Add library="pSubClientLib" />
 			<Add library="xsde" />
