@@ -84,8 +84,6 @@
 			<Add directory="$(WORKSPACEDIR)/Messages" />
 			<Add directory="$(#xsde.INCLUDE)" />
 		</Compiler>
-		<Unit filename="../../Common/HubApp/HubApp.cpp" />
-		<Unit filename="../../Common/HubApp/HubApp.h" />
 		<Unit filename="../../Messages/postmark.xsd">
 			<Option compile="1" />
 		</Unit>

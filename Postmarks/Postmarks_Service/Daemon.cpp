@@ -7,7 +7,7 @@
 
 namespace Logging
 {
-	const uint32_t LC_Service = 0x0200;
+	const uint32_t LC_Service = 0x00010000;
 	template <> const char* getLCStr<LC_Service      >() { return "Service      "; }
 }
 
@@ -21,7 +21,7 @@ std::string g_cfgfile("./SystemConfig.xml");
 std::string g_diffpath(".");
 
 std::string logfilen{DAEMON_NAME ".log"};
-Logging::LogFile logfile, *plogfile(&logfile);
+Logging::LogFile logfile;
 VEvent stopEvent;
 
 int main(int argc, char* argv[])
@@ -55,12 +55,12 @@ int main(int argc, char* argv[])
 	if (!logfilen.empty())
 		logfile.open(logfilen);
 
-	LOGTO(plogfile, Logging::LL_Info, Logging::LC_Service, "************************************ STARTUP ****************************************");
-	LOGTO(plogfile, Logging::LL_Info, Logging::LC_Service, "***** Executable: " << argv[0]);
-	LOGTO(plogfile, Logging::LL_Info, Logging::LC_Service, "***** Version: " << g_version);
+	LOGTO(logfile, Logging::LL_Info, Logging::LC_Service, "************************************ STARTUP ****************************************");
+	LOGTO(logfile, Logging::LL_Info, Logging::LC_Service, "***** Executable: " << argv[0]);
+	LOGTO(logfile, Logging::LL_Info, Logging::LC_Service, "***** Version: " << g_version);
 	for (int x = 1; x < argc; ++x)
-		LOGTO(plogfile, Logging::LL_Info, Logging::LC_Service, "***** Command line parameter: " << argv[x]);
-	LOGTO(plogfile, Logging::LL_Info, Logging::LC_Service, "*************************************************************************************");
+		LOGTO(logfile, Logging::LL_Info, Logging::LC_Service, "***** Command line parameter: " << argv[x]);
+	LOGTO(logfile, Logging::LL_Info, Logging::LC_Service, "*************************************************************************************");
 
 	Postmarks disp(logfile, g_psubaddr);
 	disp.start();
@@ -68,11 +68,11 @@ int main(int argc, char* argv[])
 	while(!stopEvent.timedwait(10000))
 		syslog(LOG_INFO, DAEMON_NAME " alive");
 
-	LOGTO(plogfile, Logging::LL_Info, Logging::LC_Service, "main loop finished. Stopping dispatcher");
+	LOGTO(logfile, Logging::LL_Info, Logging::LC_Service, "main loop finished. Stopping dispatcher");
 
 	disp.stop();
 
-	LOGTO(plogfile, Logging::LL_Info, Logging::LC_Service, "Shut down complete.  Exit");
+	LOGTO(logfile, Logging::LL_Info, Logging::LC_Service, "Shut down complete.  Exit");
 	syslog(LOG_INFO, "Shut down complete.  Exit");
 	exit(0);
 }
@@ -81,9 +81,9 @@ bool parseCmdLine(int argc, char *argv[])
 {
 	bool ret(true);
 
-	plogfile->setLogLevel(Logging::LLSet_Info);
-	plogfile->setMaxFiles(5);
-	plogfile->setSizeLimit(0x00A00000); // 10 Mb
+	logfile.setLogLevel(Logging::LLSet_Info);
+	logfile.setMaxFiles(5);
+	logfile.setSizeLimit(0x00A00000); // 10 Mb
 	for (int x = 1; x < argc; ++x)
 	{
 		if (argv[x][0] == '-')
@@ -98,16 +98,16 @@ bool parseCmdLine(int argc, char *argv[])
 					usage();
 					return false;
 				case 'd':
-					plogfile->setLogLevel(Logging::LLSet_Debug);
+					logfile.setLogLevel(Logging::LLSet_Debug);
 					break;
 				case 'm':
-					plogfile->setLogLevel(Logging::LLSet_Dump);
+					logfile.setLogLevel(Logging::LLSet_Dump);
 					break;
 				case 't':
-					plogfile->setLogLevel(Logging::LLSet_Trace);
+					logfile.setLogLevel(Logging::LLSet_Trace);
 					break;
 				case 'T':
-					plogfile->setLogLevel(Logging::LLSet_Test);
+					logfile.setLogLevel(Logging::LLSet_Test);
 					break;
 				case 'e': // run as exe
 					g_exe = true;
