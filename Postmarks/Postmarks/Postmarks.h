@@ -36,8 +36,8 @@ class Postmarks : public Task::TActiveTask<Postmarks>, /*public PubSub::TPubSubC
 {
 	std::recursive_mutex m_lk; // General lock on dispatcher state
 
-	friend HubApp::HubApp;
-	HubApp::HubApp m_hub;
+	friend HubApps::HubApp;
+	HubApps::HubApp m_hub;
 	void receiveEvent(PubSub::Message&& msg) { /*hand off to thread queue*/enqueue(msg); }
 	void eventBusConnected(bool available);
 

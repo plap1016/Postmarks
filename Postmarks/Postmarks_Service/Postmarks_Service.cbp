@@ -114,6 +114,7 @@
 			<Add library="Logging" />
 			<Add library="Task" />
 			<Add library="Misc" />
+			<Add library="HubApp" />
 			<Add library="pugixml" />
 			<Add library="pSubClientLib" />
 			<Add library="xsde" />
