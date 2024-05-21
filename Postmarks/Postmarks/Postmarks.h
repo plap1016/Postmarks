@@ -26,8 +26,8 @@ extern HANDLE g_exitEvent;
 
 namespace Logging
 {
-	const uint32_t LC_Task = 0x0010;
-	const uint32_t LC_Postmarks = 0x0020;
+	const uint32_t LC_Task = 0x0100;
+	const uint32_t LC_Postmarks = 0x0200;
 }
 
 namespace BA = boost::asio;
@@ -39,6 +39,7 @@ class Postmarks : public Task::TActiveTask<Postmarks>, /*public PubSub::TPubSubC
 	friend HubApps::HubApp;
 	HubApps::HubApp m_hub;
 	void receiveEvent(PubSub::Message&& msg) { /*hand off to thread queue*/enqueue(msg); }
+	void receiveUnknown(uint8_t, const std::string&) {}
 	void eventBusConnected(bool available);
 
 	std::recursive_mutex m_dispLock;
