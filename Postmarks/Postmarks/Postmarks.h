@@ -24,6 +24,8 @@
 extern HANDLE g_exitEvent;
 #endif
 
+extern std::string g_version;
+
 namespace Logging
 {
 	const uint32_t LC_Task = 0x0100;
@@ -32,15 +34,15 @@ namespace Logging
 
 namespace BA = boost::asio;
 
-class Postmarks : public Task::TActiveTask<Postmarks>, /*public PubSub::TPubSubClient<Postmarks>,*/ public Logging::LogClient
+class Postmarks : public Task::TActiveTask<Postmarks>, public Logging::LogClient
 {
 	std::recursive_mutex m_lk; // General lock on dispatcher state
 
 	friend HubApps::HubApp;
 	HubApps::HubApp m_hub;
-	void receiveEvent(PubSub::Message&& msg) { /*hand off to thread queue*/enqueue(msg); }
+	void receiveEvent(PubSub::Message&& msg) { /*hand off to thread queue*/enqueue<PubSub::Message&&>(std::move(msg)); }
 	void receiveUnknown(uint8_t, const std::string&) {}
-	void eventBusConnected(bool available);
+	void eventBusConnected(HubApps::HubConnectionState state);
 
 	std::recursive_mutex m_dispLock;
 	PmConfig::Postmarks m_cfg;
@@ -62,6 +64,9 @@ public:
 
 	bool start();
 	void stop();
+
+	static constexpr const char* appName() { return "Postmarks"; }
+	constexpr std::string& version() const { return g_version; }
 
 	void processMsg(PubSub::Message&& m);
 	void processMsg(const postmarks::pmRsp& rsp);

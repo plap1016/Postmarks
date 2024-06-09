@@ -19,15 +19,13 @@ const PubSub::Subject PUB_PMRSP{ "Postmark", "Response" };
 const PubSub::Subject SUB_DIE{ "Die", "Postmarks"};
 #endif
 
-extern std::string g_version;
-
 constexpr qpc_clock::duration TTL_LONGTIME{std::chrono::hours(-12)}; // up to 12 hrs or until superseded
 constexpr qpc_clock::duration TTL_STATUS{std::chrono::minutes(1)};
 
 Postmarks::Postmarks(Logging::LogFile& log, const std::string& psubAddr)
 	: Task::TActiveTask<Postmarks>(2)
 	, Logging::LogClient(log)
-	, m_hub(*this, "Postmarks", log, psubAddr)
+	, m_hub(*this, psubAddr)
 {
 }
 
@@ -58,18 +56,15 @@ void Postmarks::stop()
 		getMsgDispatcher().stop();
 }
 
-void Postmarks::eventBusConnected(bool available)
+void Postmarks::eventBusConnected(HubApps::HubConnectionState state)
 {
-	if (available)
+	if (state == HubApps::HubConnectionState::HubAvailable)
 	{
 		m_hub.subscribe(SUB_CFG);
 		m_hub.subscribe(SUB_PMREQ);
 #if defined(_DEBUG)
 		m_hub.subscribe(SUB_DIE);
 #endif
-	}
-	else
-	{
 	}
 }
 
