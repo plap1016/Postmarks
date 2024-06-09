@@ -22,7 +22,6 @@ std::string g_diffpath(".");
 
 std::string logfilen{DAEMON_NAME ".log"};
 Logging::LogFile logfile;
-VEvent stopEvent;
 
 int main(int argc, char* argv[])
 {
@@ -50,7 +49,7 @@ int main(int argc, char* argv[])
 		syslog(LOG_INFO, "Daemon running");
 	}
 
-	signalSetup();
+	VEvent& stopEvent = signalSetup();
 
 	if (!logfilen.empty())
 		logfile.open(logfilen);
