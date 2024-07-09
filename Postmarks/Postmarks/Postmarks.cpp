@@ -1,6 +1,3 @@
-#ifdef WIN32
-#include "stdafx.h"
-#endif
 #include "configuration-pimpl.hxx"
 #include "postmark-pimpl.hxx"
 #include "postmark-simpl.hxx"
@@ -14,23 +11,13 @@
 #include <fstream>
 #include <chrono>
 
-const PubSub::Subject PUB_ALIVE{ "Alive", "Postmarks" };
-const PubSub::Subject PUB_HERE{ "Here", "Postmarks" };
-const PubSub::Subject PUB_DEAD{ "Dead", "Postmarks" };
-const PubSub::Subject PUB_CFG_REQUEST{ "_", "CFG", "Request", "Postmarks" };
-
 const PubSub::Subject SUB_CFG{ "CFG", "Postmarks" };
 const PubSub::Subject SUB_PMREQ{ "_", "Postmark", "Request" };
 const PubSub::Subject PUB_PMRSP{ "Postmark", "Response" };
 
-#if defined(_DEBUG) && defined(WIN32)
-const PubSub::Subject SUB_DIE
-{ "Die", "Postmarks"
-};
-HANDLE g_exitEvent;
+#if defined(_DEBUG)
+const PubSub::Subject SUB_DIE{ "Die", "Postmarks"};
 #endif
-
-extern std::string g_version;
 
 constexpr qpc_clock::duration TTL_LONGTIME{std::chrono::hours(-12)}; // up to 12 hrs or until superseded
 constexpr qpc_clock::duration TTL_STATUS{std::chrono::minutes(1)};
@@ -38,8 +25,7 @@ constexpr qpc_clock::duration TTL_STATUS{std::chrono::minutes(1)};
 Postmarks::Postmarks(Logging::LogFile& log, const std::string& psubAddr)
 	: Task::TActiveTask<Postmarks>(2)
 	, Logging::LogClient(log)
-	, m_pubsubaddr(psubAddr)
-	, m_sock(m_iosvc)
+	, m_hub(*this, psubAddr)
 {
 }
 
@@ -52,10 +38,10 @@ bool Postmarks::start()
 {
 	LOG(Logging::LL_Debug, Logging::LC_Postmarks, "start");
 
-	m_sockThread = std::thread([=] { socketThread(); });
-
 	if (!getMsgDispatcher().started())
 		getMsgDispatcher().start();
+
+	m_hub.start();
 
 	return true;
 }
@@ -63,135 +49,22 @@ bool Postmarks::start()
 void Postmarks::stop()
 {
 	LOG(Logging::LL_Debug, Logging::LC_Postmarks, "stop");
-	sendMsg(PubSub::Message(PUB_DEAD, TTL_LONGTIME));
 
-	if (m_here)
-	{
-		m_here->cancelMsg();
-		m_here.reset();
-	}
+	m_hub.stop();
 
 	while (getMsgDispatcher().started())
 		getMsgDispatcher().stop();
-
-	m_iosvc.stop();
-	m_sockThread.join();
 }
 
-void Postmarks::socketThread()
+void Postmarks::eventBusConnected(HubApps::HubConnectionState state)
 {
-	try
+	if (state == HubApps::HubConnectionState::HubAvailable)
 	{
-		BA::io_service::work work(m_iosvc);
-		initSock();
-		m_iosvc.run();
-	}
-	catch (const std::exception& ex)
-	{
-		LOG(Logging::LL_Severe, Logging::LC_Postmarks, ex.what());
-		throw ex;
-	}
-}
-
-void Postmarks::initSock()
-{
-	std::string::size_type i = m_pubsubaddr.find(':');
-	if (i == std::string::npos)
-		connect(m_pubsubaddr, "3101");
-	else
-		connect(m_pubsubaddr.substr(0, i), m_pubsubaddr.substr(i + 1));
-}
-
-template <> void Postmarks::processEvent<Postmarks::evReconnect>(void)
-{
-	initSock();
-}
-
-void Postmarks::connect(const std::string& address, const std::string& port)
-{
-	namespace BIP = boost::asio::ip;
-
-	std::shared_ptr<BIP::tcp::resolver> resolver = std::make_shared<BIP::tcp::resolver>(m_iosvc);
-
-	auto connectHandler = [this] (const boost::system::error_code& errorCode, const BIP::tcp::endpoint& ep)
-	{
-		if (errorCode)
-			onConnectionError("Could not connect: " + errorCode.message());
-		else
-			onConnected(ep);
-	};
-
-	auto resolveHandler = [resolver, connectHandler, this]
-		(const boost::system::error_code& errorCode, const BIP::tcp::resolver::results_type results)
-	{
-		if (errorCode)
-			onConnectionError("Could not resolve address: " + errorCode.message());
-		else
-			boost::asio::async_connect(m_sock, results, connectHandler);
-	};
-
-	resolver->async_resolve(address, port, resolveHandler);
-}
-
-void Postmarks::onConnected(const BA::ip::tcp::endpoint& ep)
-{
-	LOG(Logging::LL_Info, Logging::LC_PubSub, "Connected to pSub bus at " << ep);
-
-	resetPSub();
-
-	m_sock.set_option(boost::asio::socket_base::keep_alive(true));
-
-	// Subscribe to stuff
-	subscribe(SUB_CFG);
-	subscribe(SUB_PMREQ);
-#if defined(_DEBUG) && defined(WIN32)
-	subscribe(SUB_DIE);
+		m_hub.subscribe(SUB_CFG);
+		m_hub.subscribe(SUB_PMREQ);
+#if defined(_DEBUG)
+		m_hub.subscribe(SUB_DIE);
 #endif
-	sendMsg(PubSub::Message(PUB_ALIVE, g_version, TTL_LONGTIME));
-
-	if (!haveCfg)
-		m_cfgAliveDeferred = enqueueWithDelay<evCfgDeferred>(3s);
-
-	if (m_here)
-		m_here->cancelMsg();
-	m_here = enqueueWithDelay<evHereTime>(2s, true);
-
-	m_sock.async_read_some(BA::buffer(readBuff, 1024), [&](const boost::system::error_code& error, size_t bytes){ OnReadSome(error, bytes); });
-}
-
-void Postmarks::onConnectionError(const std::string& error)
-{
-	LOG(Logging::LL_Warning, Logging::LC_PubSub, error << " Reconnect in 1 second");
-	enqueueWithDelay<evReconnect>(1s);
-}
-
-void Postmarks::OnReadSome(const boost::system::error_code& error, size_t bytes_transferred)
-{
-	if (!error)
-	{
-		try
-		{
-			processBuffer((char*)readBuff, bytes_transferred);
-		}
-		catch (const std::exception& ex)
-		{
-			LOG(Logging::LL_Warning, Logging::LC_PubSub, "Error processing pSub buffer. Read buffers reset: " << ex.what());
-			LOG(Logging::LL_Dump, Logging::LC_PubSub, readBuff);
-		}
-
-		m_sock.async_read_some(BA::buffer(readBuff, 1024), [&](const boost::system::error_code& error, size_t bytes){ OnReadSome(error, bytes); });
-	}
-	else
-	{
-		LOG(Logging::LL_Warning, Logging::LC_PubSub, "Lost connection to pSub bus");
-
-		resetPSub();
-		if (m_here)
-		{
-			m_here->cancelMsg();
-			m_here.reset();
-		}
-		enqueueWithDelay<evReconnect>(1s);
 	}
 }
 
@@ -308,22 +181,8 @@ void Postmarks::configure(const std::string& cfgStr)
 		err << "parser_exception " << ex.text() << " " << ex.what() << " at " << (int)ex.line() << ":" << (int)ex.column();
 
 		LOG(Logging::LL_Warning, Logging::LC_Postmarks, "CONFIG ERROR: The following errors were found:\r\n" << err.str());
-		sendMsg(PubSub::Message{{ "Error", "Postmarks", "Config" }, err.str()});
+		m_hub.sendMsg(PubSub::Message{{ "Error", "Postmarks", "Config" }, err.str()});
 	}
-}
-
-template <> void Postmarks::processEvent<Postmarks::evCfgDeferred>()
-{
-	if (!haveCfg)
-	{
-		sendMsg(PubSub::Message(PUB_CFG_REQUEST, g_version));
-		m_cfgAliveDeferred = enqueueWithDelay<evCfgDeferred>(3s);
-	}
-}
-
-template <> void Postmarks::processEvent<Postmarks::evHereTime>()
-{
-	sendMsg(PubSub::Message(PUB_HERE));
 }
 
 void Postmarks::processMsg(PubSub::Message&& m)
@@ -335,7 +194,7 @@ void Postmarks::processMsg(PubSub::Message&& m)
 
 	if (PubSub::match(SUB_CFG, m.subject))
 		configure(m.payload);
-#if defined(_DEBUG) && defined(WIN32)
+#if defined(_DEBUG)
 	else if (PubSub::match(SUB_DIE, m.subject))
 		SetEvent(g_exitEvent);
 #endif
@@ -477,16 +336,12 @@ void Postmarks::assignPostmark(const std::string& reqStr)
 		err.payload += " ";
 		err.payload += ex.what();
 
-		sendMsg(err);
+		m_hub.sendMsg(err);
 	}
 }
 
 void Postmarks::processMsg(const postmarks::pmRsp& rsp)
 {
-	PubSub::Message msg;
-	msg.subject = PUB_PMRSP;
-	msg.ttl = TTL_LONGTIME;
-
 	try
 	{
 		postmarks::pmRsp_saggr rsp_s;
@@ -496,9 +351,7 @@ void Postmarks::processMsg(const postmarks::pmRsp& rsp)
 		rsp_s.pre(rsp);
 		rsp_d.serialize(rspstrm, 0);
 
-		msg.payload = rspstrm.str();
-
-		sendMsg(msg);
+		m_hub.sendMsg(PubSub::Message{PUB_PMRSP, rspstrm.str(), TTL_LONGTIME});
 	}
 	catch (xml_schema::serializer_xml& ex)
 	{
@@ -515,14 +368,6 @@ namespace Logging
 	template <> const char* getLCStr<LC_Task      >()
 	{
 		return "Task       ";
-	}
-	template <> const char* getLCStr<LC_PubSub    >()
-	{
-		return "PubSub     ";
-	}
-	template <> const char* getLCStr<LC_TcpConn   >()
-	{
-		return "TcpConn    ";
 	}
 	template <> const char* getLCStr<LC_Postmarks >()
 	{
