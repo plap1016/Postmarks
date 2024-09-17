@@ -85,7 +85,7 @@ void Postmarks::configure(const std::string& cfgStr)
 
 			std::unique_lock<std::recursive_mutex> sync(m_lk);
 
-			s.post()->_copy(m_cfg);
+			std::unique_ptr<PmConfig::Postmarks>{s.post()}->_copy(m_cfg);
 
 			m_postmarks.clear();
 
