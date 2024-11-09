@@ -11,7 +11,7 @@
 #include "postmark.hxx"
 
 #include <boost/asio.hpp>
-#include <boost/filesystem.hpp>
+#include <filesystem>
 #include <set>
 #include <vector>
 #include <chrono>
