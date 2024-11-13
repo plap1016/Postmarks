@@ -66,11 +66,11 @@
 					<Add directory="$(#xsde.LIB_ARM)" />
 				</Linker>
 			</Target>
-			<Target title="IVU_Release">
+			<Target title="Pi_Release">
 				<Option output="$(WORKSPACEDIR)/$(TARGET_NAME)/postmarksd" prefix_auto="1" extension_auto="1" />
 				<Option object_output=".objs/$(TARGET_NAME)" />
 				<Option type="1" />
-				<Option compiler="poky_compiler_for_ivu" />
+				<Option compiler="compiler_for_pi" />
 				<Option use_console_runner="0" />
 				<Option projectIncludeDirsRelation="2" />
 				<Option projectLibDirsRelation="2" />
@@ -81,11 +81,11 @@
 					<Add directory="$(#xsde.LIB_ARM)" />
 				</Linker>
 			</Target>
-			<Target title="IVU_Debug">
+			<Target title="Pi_Debug">
 				<Option output="$(WORKSPACEDIR)/$(TARGET_NAME)/postmarksd" prefix_auto="1" extension_auto="1" />
 				<Option object_output=".objs/$(TARGET_NAME)" />
 				<Option type="1" />
-				<Option compiler="poky_compiler_for_ivu" />
+				<Option compiler="compiler_for_pi" />
 				<Option use_console_runner="0" />
 				<Option parameters="-ec /home/andrew/HGRoot/ccm_psub/Config/SystemConfig.xml" />
 				<Option projectLibDirsRelation="2" />
