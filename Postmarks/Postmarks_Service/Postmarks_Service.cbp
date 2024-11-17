@@ -27,7 +27,7 @@
 				<Option type="1" />
 				<Option compiler="gcc" />
 				<Option use_console_runner="0" />
-				<Option parameters="-de" />
+				<Option parameters="-e" />
 				<Compiler>
 					<Add option="-g" />
 				</Compiler>
@@ -78,7 +78,7 @@
 					<Add option="-O3" />
 				</Compiler>
 				<Linker>
-					<Add directory="$(#xsde.LIB_ARM)" />
+					<Add directory="$(#xsde.LIB_ARM64)" />
 				</Linker>
 			</Target>
 			<Target title="Pi_Debug">
@@ -93,12 +93,12 @@
 					<Add option="-g" />
 				</Compiler>
 				<Linker>
-					<Add directory="$(#xsde.LIB_ARM)" />
+					<Add directory="$(#xsde.LIB_ARM64)" />
 				</Linker>
 			</Target>
 		</Build>
 		<VirtualTargets>
-			<Add alias="All" targets="Release;Debug;ARM_Release;ARM_Debug;" />
+			<Add alias="All" targets="Release;Debug;ARM_Release;ARM_Debug;Pi_Release;Pi_Debug;" />
 		</VirtualTargets>
 		<Compiler>
 			<Add option="-std=c++17" />
