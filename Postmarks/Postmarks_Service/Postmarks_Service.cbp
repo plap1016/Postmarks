@@ -2,13 +2,13 @@
 <CodeBlocks_project_file>
 	<FileVersion major="1" minor="6" />
 	<Project>
-		<Option title="Postmarks_Service" />
+		<Option title="postmarksd" />
 		<Option pch_mode="2" />
 		<Option default_target="Debug" />
 		<Option compiler="gcc" />
 		<Build>
 			<Target title="Release">
-				<Option output="$(WORKSPACEDIR)/$(TARGET_NAME)/postmarksd" prefix_auto="1" extension_auto="1" />
+				<Option output="$(WORKSPACEDIR)/build/$(TARGET_NAME)/$(PROJECTNAME)" prefix_auto="1" extension_auto="1" />
 				<Option object_output=".objs/$(TARGET_NAME)" />
 				<Option type="1" />
 				<Option compiler="gcc" />
@@ -17,12 +17,11 @@
 					<Add option="-O3" />
 				</Compiler>
 				<Linker>
-					<Add directory="$(PROJECTDIR)/../Config/tinyxpath" />
 					<Add directory="$(#xsde.LIB)" />
 				</Linker>
 			</Target>
 			<Target title="Debug">
-				<Option output="$(WORKSPACEDIR)/$(TARGET_NAME)/postmarksd" prefix_auto="1" extension_auto="1" />
+				<Option output="$(WORKSPACEDIR)/build/$(TARGET_NAME)/$(PROJECTNAME)" prefix_auto="1" extension_auto="1" />
 				<Option object_output=".objs/$(TARGET_NAME)" />
 				<Option type="1" />
 				<Option compiler="gcc" />
@@ -32,12 +31,11 @@
 					<Add option="-g" />
 				</Compiler>
 				<Linker>
-					<Add directory="$(PROJECTDIR)/../Config/tinyxpath" />
 					<Add directory="$(#xsde.LIB)" />
 				</Linker>
 			</Target>
 			<Target title="ARM_Release">
-				<Option output="$(WORKSPACEDIR)/$(TARGET_NAME)/postmarksd" prefix_auto="1" extension_auto="1" />
+				<Option output="$(WORKSPACEDIR)/build/$(TARGET_NAME)/$(PROJECTNAME)" prefix_auto="1" extension_auto="1" />
 				<Option object_output=".objs/$(TARGET_NAME)" />
 				<Option type="1" />
 				<Option compiler="arm-elf-gcc" />
@@ -52,7 +50,7 @@
 				</Linker>
 			</Target>
 			<Target title="ARM_Debug">
-				<Option output="$(WORKSPACEDIR)/$(TARGET_NAME)/postmarksd" prefix_auto="1" extension_auto="1" />
+				<Option output="$(WORKSPACEDIR)/build/$(TARGET_NAME)/$(PROJECTNAME)" prefix_auto="1" extension_auto="1" />
 				<Option object_output=".objs/$(TARGET_NAME)" />
 				<Option type="1" />
 				<Option compiler="arm-elf-gcc" />
@@ -67,7 +65,7 @@
 				</Linker>
 			</Target>
 			<Target title="Pi_Release">
-				<Option output="$(WORKSPACEDIR)/$(TARGET_NAME)/postmarksd" prefix_auto="1" extension_auto="1" />
+				<Option output="$(WORKSPACEDIR)/build/$(TARGET_NAME)/$(PROJECTNAME)" prefix_auto="1" extension_auto="1" />
 				<Option object_output=".objs/$(TARGET_NAME)" />
 				<Option type="1" />
 				<Option compiler="compiler_for_pi" />
@@ -82,7 +80,7 @@
 				</Linker>
 			</Target>
 			<Target title="Pi_Debug">
-				<Option output="$(WORKSPACEDIR)/$(TARGET_NAME)/postmarksd" prefix_auto="1" extension_auto="1" />
+				<Option output="$(WORKSPACEDIR)/build/$(TARGET_NAME)/$(PROJECTNAME)" prefix_auto="1" extension_auto="1" />
 				<Option object_output=".objs/$(TARGET_NAME)" />
 				<Option type="1" />
 				<Option compiler="compiler_for_pi" />
@@ -121,7 +119,7 @@
 			<Add library="dl" />
 			<Add library="pthread" />
 			<Add library="boost_system" />
-			<Add directory="$(WORKSPACEDIR)/$(TARGET_NAME)" />
+			<Add directory="$(WORKSPACEDIR)/build/lib/$(TARGET_NAME)" />
 		</Linker>
 		<Unit filename="Daemon.cpp" />
 		<Extensions>
