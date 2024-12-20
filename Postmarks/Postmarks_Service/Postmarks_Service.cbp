@@ -108,7 +108,7 @@
 			<Add directory="$(#xsde.INCLUDE)" />
 		</Compiler>
 		<Linker>
-			<Add library="Postmarks" />
+			<Add library="postmarks" />
 			<Add library="Logging" />
 			<Add library="Task" />
 			<Add library="Misc" />
